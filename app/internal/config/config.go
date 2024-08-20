@@ -10,12 +10,14 @@ import (
 type Config struct {
 	TODO_PORT   string
 	TODO_DBFILE string
+	WEB_DIR     string
 }
 
 func New() *Config {
 	return &Config{
 		TODO_PORT:   getEnv("TODO_PORT", "7540"),
 		TODO_DBFILE: getExecutable("TODO_DBFILE"),
+		WEB_DIR:     "web",
 	}
 }
 

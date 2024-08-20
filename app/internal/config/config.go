@@ -17,7 +17,7 @@ func New() *Config {
 	return &Config{
 		TODO_PORT:   getEnv("TODO_PORT", "7540"),
 		TODO_DBFILE: getExecutable("TODO_DBFILE"),
-		WEB_DIR:     "web",
+		WEB_DIR:     "./web",
 	}
 }
 

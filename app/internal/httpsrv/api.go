@@ -22,8 +22,10 @@ func NewAPI(config config.Config) *API {
 }
 
 func (a *API) Register(r chi.Router) {
+
+	r.Get("/api/nextdate", a.GetHandler)
+
 	r.Handle("/*", http.FileServer(http.Dir(a.config.WEB_DIR)))
-	// r.Get("/api/nextdate", a.GetHandler)
 }
 
 func (a *API) Start() {

@@ -12,8 +12,7 @@ func main() {
 
 	config := config.New()
 	storage.New(config)
-
 	api := httpsrv.NewAPI(*config)
-	api.Start()
 
+	api.Start()
 }

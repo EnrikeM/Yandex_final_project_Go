@@ -24,8 +24,6 @@ func (a *API) GetHandler(w http.ResponseWriter, r *http.Request) {
 	result, err := validators.NextDate(now, date, repeat)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-
-		// _, _ = w.Write([]byte(fmt.Sprintf("error time: %s", err)))
 	}
 
 	_, _ = w.Write([]byte(result))

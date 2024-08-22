@@ -1,6 +1,7 @@
 package httpsrv
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,31 +11,34 @@ import (
 )
 
 type API struct {
+	DB     *sql.DB
 	config config.Config
 	r      chi.Router
 }
 
-func NewAPI(config config.Config) *API {
+func NewAPI(db *sql.DB, config config.Config) *API {
 	return &API{
 		r:      chi.NewRouter(),
 		config: config,
+		DB:     db,
 	}
 }
 
 func (a *API) Register(r chi.Router) {
 
 	r.Get("/api/nextdate", a.GetHandler)
-	r.Post("/api/nextdate", a.PostHandler)
+	r.Post("/api/task", a.PostHandler)
 
 	r.Handle("/*", http.FileServer(http.Dir(a.config.WEB_DIR)))
 }
 
-func (a *API) Start() {
+func (a *API) Start() error {
 	a.Register(a.r)
 	fmt.Println("server start")
 
-	err := http.ListenAndServe(fmt.Sprintf(":%s", a.config.TODO_PORT), a.r)
+	err := http.ListenAndServe(fmt.Sprintf("127.0.0.1:%s", a.config.TODO_PORT), a.r)
 	if err != nil {
 		log.Fatal(fmt.Errorf("error starting server %w", err))
 	}
+	return nil
 }

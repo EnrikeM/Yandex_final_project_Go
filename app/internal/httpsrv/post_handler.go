@@ -1,6 +1,7 @@
 package httpsrv
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -14,35 +15,7 @@ type Task struct {
 	Date    *string `json:"date"`
 	Title   *string `json:"title"`
 	Comment string  `json:"comment,omitempty"`
-	Repeat  *string `json:"repeat,omitempty"`
-}
-
-func (t *Task) validate() error {
-	nextDate, err := validators.NextDate(time.Now(), *t.Date, *t.Repeat) // тут может быть проблема
-	if err != nil {
-		return (fmt.Errorf("error resolving next date for time %s", nextDate))
-	}
-
-	if t.Title == nil {
-		return (fmt.Errorf("field `title` cannot be empty"))
-	}
-	if t.Date == nil || *t.Date == "" {
-		*t.Date = (time.Now().Format(validators.TimeFormat))
-	}
-	if *t.Date < (time.Now().Format(validators.TimeFormat)) {
-		if t.Repeat == nil || *t.Repeat == "" {
-			*t.Date = (time.Now().Format(validators.TimeFormat))
-		}
-		// nextDate, err := validators.NextDate(time.Now(), *t.Date, *t.Repeat) // тут может быть проблема
-		// if err != nil {
-		// 	return (fmt.Errorf("error resolving next date for time %s", nextDate))
-		// }
-	}
-
-	if _, err := time.Parse("20060102", *t.Date); err != nil {
-		return (fmt.Errorf("field `date` must be in format YYYYMMDD"))
-	}
-	return nil
+	Repeat  string  `json:"repeat,omitempty"`
 }
 
 func (a *API) PostHandler(w http.ResponseWriter, r *http.Request) {
@@ -55,12 +28,89 @@ func (a *API) PostHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&task)
 	if err != nil {
-		log.Fatal(fmt.Errorf("error decoding request json %w", err))
+		log.Printf("error decoding request json: %v", err)
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
 	}
 
 	err = task.validate()
 	if err != nil {
-		log.Fatal(fmt.Errorf("error validating json %w", err))
+		log.Printf("error validating json: %v", err)
+		response := map[string]string{"error": err.Error()}
+		fmt.Println(response)
+
+		if err = json.NewEncoder(w).Encode(response); err != nil {
+			http.Error(w, "error encoding response", http.StatusInternalServerError)
+			return
+		}
+		return
 	}
 
+	if a.DB == nil {
+		log.Printf("database connection is nil")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	query := "INSERT INTO scheduler (date, title, comment, repeat) VALUES (?, ?, ?, ?)"
+	lastID, err := getLastId(task, query, a.DB)
+	if err != nil {
+		log.Printf("error getting last id: %v", err)
+		http.Error(w, "error saving task", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	response := map[string]int64{"id": lastID}
+	if err = json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, "error encoding response", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (t *Task) validate() error {
+	log.Println("validate start")
+
+	if t.Date == nil || *t.Date == "" {
+		*t.Date = time.Now().Format(validators.TimeFormat)
+	}
+
+	if _, err := time.Parse("20060102", *t.Date); err != nil {
+		return fmt.Errorf("field `date` must be in format YYYYMMDD, but provided %w", err)
+	}
+
+	if t.Title == nil || *t.Title == "" {
+		return fmt.Errorf("field `title` cannot be empty")
+	}
+
+	nextDate, err := validators.NextDate(time.Now(), *t.Date, t.Repeat)
+	if err != nil {
+		return fmt.Errorf("couldn't resolve next date: %w", err)
+	}
+
+	if *t.Date < time.Now().Format(validators.TimeFormat) {
+		if t.Repeat == "" {
+			now := time.Now().Format(validators.TimeFormat)
+			t.Date = &now
+		} else {
+			t.Date = &nextDate
+		}
+	}
+
+	log.Println("validate end")
+	log.Println(t)
+	return nil
+}
+
+func getLastId(task Task, query string, db *sql.DB) (int64, error) {
+	result, err := db.Exec(query, &task.Date, &task.Title, task.Comment, task.Repeat)
+	if err != nil {
+		return 0, fmt.Errorf("error executing query: %w", err)
+	}
+
+	res, err := result.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("error getting last id: %w", err)
+	}
+	return res, nil
 }

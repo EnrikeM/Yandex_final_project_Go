@@ -13,12 +13,12 @@ type Config struct {
 	WEB_DIR     string
 }
 
-func New() *Config {
+func New() (*Config, error) {
 	return &Config{
 		TODO_PORT:   getEnv("TODO_PORT", "7540"),
 		TODO_DBFILE: getExecutable("TODO_DBFILE"),
 		WEB_DIR:     "./web",
-	}
+	}, nil
 }
 
 func getEnv(key string, defaultVal string) string {

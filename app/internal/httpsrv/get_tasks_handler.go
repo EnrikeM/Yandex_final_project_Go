@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 type GetTask struct {
@@ -20,8 +21,9 @@ func (a *API) GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
+	search := r.URL.Query().Get("search")
 
-	tasks, err := getTasks(a.DB)
+	tasks, err := getTasks(a.DB, search)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(fmt.Sprintf("error getting tasks: %s", err)))
@@ -41,10 +43,24 @@ func (a *API) GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func getTasks(db *sql.DB) ([]GetTask, error) {
-	query := "SELECT * FROM scheduler ORDER BY date DESC LIMIT 10"
+func getTasks(db *sql.DB, search string) ([]GetTask, error) {
+	var query string
 
-	rows, err := db.Query(query)
+	if search == "" {
+		query = "SELECT * FROM scheduler ORDER BY date DESC LIMIT 10"
+	}
+	if search != "" {
+		searchDate, err := time.Parse("02.01.2006", search)
+		if err == nil {
+			search = searchDate.Format("20060102")
+			query = "SELECT * FROM scheduler WHERE date LIKE ? ORDER BY date DESC LIMIT 10"
+		} else {
+
+			query = "SELECT * FROM scheduler WHERE title LIKE ? OR comment LIKE ? ORDER BY date LIMIT 10"
+		}
+	}
+
+	rows, err := db.Query(query, fmt.Sprintf("%%%s%%", search), fmt.Sprintf("%%%s%%", search))
 	if err != nil {
 		return nil, fmt.Errorf("error exectuing query: %v", err)
 	}

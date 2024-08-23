@@ -18,7 +18,7 @@ type Task struct {
 	Repeat  string  `json:"repeat,omitempty"`
 }
 
-func (a *API) PostHandler(w http.ResponseWriter, r *http.Request) {
+func (a *API) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -52,7 +52,7 @@ func (a *API) PostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := "INSERT INTO scheduler (date, title, comment, repeat) VALUES (?, ?, ?, ?)"
+	query := "INSERT INTO scheduler (date, title, comment, repeat) VALUES (?, ?, ?, ?)" // вынести query в getLastID
 	lastID, err := getLastId(task, query, a.DB)
 	if err != nil {
 		log.Printf("error getting last id: %v", err)

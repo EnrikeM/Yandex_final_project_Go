@@ -33,12 +33,15 @@ func getExecutable(key string) string {
 	dbFile := os.Getenv(key)
 
 	if dbFile == "" {
-		appPath, err := os.Executable()
+		// Use the current working directory
+		cwd, err := os.Getwd()
 		if err != nil {
-			log.Fatal(fmt.Errorf("error getting appPath: %w", err))
+			log.Fatal(fmt.Errorf("error getting current working directory: %w", err))
 		}
-		dbFile = filepath.Join(filepath.Dir(appPath), "scheduler.db")
+		dbFile = filepath.Join(cwd, "scheduler.db")
 	}
+
+	log.Println(dbFile)
 
 	return dbFile
 }

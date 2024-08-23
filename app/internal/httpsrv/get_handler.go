@@ -8,7 +8,7 @@ import (
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/validators"
 )
 
-func (a *API) GetHandler(w http.ResponseWriter, r *http.Request) {
+func (a *API) GetNextDateHandler(w http.ResponseWriter, r *http.Request) {
 
 	nowStr := r.URL.Query().Get("now")
 	now, err := time.Parse("20060102", nowStr)

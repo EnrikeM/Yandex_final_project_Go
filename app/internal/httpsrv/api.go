@@ -26,8 +26,9 @@ func NewAPI(db *sql.DB, config config.Config) *API {
 
 func (a *API) Register(r chi.Router) {
 
-	r.Get("/api/nextdate", a.GetHandler)
-	r.Post("/api/task", a.PostHandler)
+	r.Get("/api/nextdate", a.GetNextDateHandler)
+	r.Post("/api/task", a.PostTaskHandler)
+	r.Get("/api/tasks", a.GetTaskHandler)
 
 	r.Handle("/*", http.FileServer(http.Dir(a.config.WEB_DIR)))
 }
@@ -36,7 +37,7 @@ func (a *API) Start() error {
 	a.Register(a.r)
 	fmt.Println("server start")
 
-	err := http.ListenAndServe(fmt.Sprintf("127.0.0.1:%s", a.config.TODO_PORT), a.r)
+	err := http.ListenAndServe(fmt.Sprintf(":%s", a.config.TODO_PORT), a.r)
 	if err != nil {
 		log.Fatal(fmt.Errorf("error starting server %w", err))
 	}

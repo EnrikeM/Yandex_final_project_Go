@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
 )
 
 func (a *API) PutTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -24,12 +26,7 @@ func (a *API) PutTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if task.ID == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		if err = json.NewEncoder(w).Encode(map[string]string{"error": "не указан ID"}); err != nil {
-			http.Error(w, "error encoding response", http.StatusInternalServerError)
-			return
-		}
+		ErrIDNotProvided.Error(w, http.StatusBadRequest)
 		return
 	}
 
@@ -42,12 +39,8 @@ func (a *API) PutTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = validateTask.validate()
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		if err := json.NewEncoder(w).Encode(map[string]string{"error": "не валидная задача"}); err != nil {
-			http.Error(w, "error encoding response", http.StatusInternalServerError)
-			return
-		}
+		rErr := apierrors.New(err.Error())
+		rErr.Error(w, http.StatusBadRequest)
 		return
 	}
 
@@ -76,7 +69,6 @@ func (a *API) PutTaskHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func redactTask(db *sql.DB, task GetTask) error {
-
 	query := `
 	UPDATE scheduler 
 	SET date = ?, title = ?, comment = ?, repeat = ?, id = ?

@@ -1,20 +1,20 @@
 package httpsrv
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/validators"
 )
 
-func (a *API) GetNextDateHandler(w http.ResponseWriter, r *http.Request) {
+var ErrParseTime = apierrors.New("error parsing time")
 
+func (a *API) GetNextDateHandler(w http.ResponseWriter, r *http.Request) {
 	nowStr := r.URL.Query().Get("now")
 	now, err := time.Parse("20060102", nowStr)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte(fmt.Sprintf("error parsing time: %s", err)))
+		ErrParseTime.Error(w, http.StatusBadRequest)
 		return
 	}
 
@@ -23,7 +23,9 @@ func (a *API) GetNextDateHandler(w http.ResponseWriter, r *http.Request) {
 
 	result, err := validators.NextDate(now, date, repeat)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		rErr := apierrors.New(err.Error())
+		rErr.Error(w, http.StatusBadRequest)
+		return
 	}
 
 	_, _ = w.Write([]byte(result))

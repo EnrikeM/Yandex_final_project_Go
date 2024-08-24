@@ -98,8 +98,6 @@ func (t *Task) validate() error {
 		}
 	}
 
-	log.Println("validate end")
-	log.Println(t)
 	return nil
 }
 

@@ -40,7 +40,5 @@ func getExecutable(key string) string {
 		dbFile = filepath.Join(cwd, "scheduler.db")
 	}
 
-	log.Println(dbFile)
-
 	return dbFile
 }

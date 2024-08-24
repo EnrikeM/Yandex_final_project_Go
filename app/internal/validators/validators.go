@@ -2,7 +2,6 @@ package validators
 
 import (
 	"fmt"
-	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -11,6 +10,16 @@ import (
 
 // TODO: Refactor
 const TimeFormat = "20060102"
+
+const (
+	errInvalidDateFormat  = "param `date` must be in format YYYYMMDD"
+	errInvalidNowFormat   = "param `now` must be in format YYYYMMDD"
+	errInvalidRepeatValue = "value of timePeriod must be an integer"
+	errForbiddenRepeat    = "%s is forbidden, please use `d` or `y`"
+	errInvalidDay         = "`m` value must be integer or array with values from -2 to 31 excluding 0"
+	errInvalidWeekday     = "`w` value must be integer or array with values from 1 to 7"
+	errInvalidQuery       = "params `now` and `date` must be defined in query"
+)
 
 var weekDay = map[string]string{
 	"1": "Monday",
@@ -38,38 +47,31 @@ var monthsMap = map[int]string{
 }
 
 func NextDate(now time.Time, date string, repeat string) (string, error) {
-	log.Println("NEXT DATE")
 	dateFormatted, err := time.Parse(TimeFormat, date)
 
-	log.Printf("Now: %v, Date: %s", now, date)
 	if err != nil {
-		return "", fmt.Errorf("param `date` must be in format YYYYMMDD")
+		return "", fmt.Errorf(errInvalidDateFormat)
 	}
-	log.Println("After dateFormatted")
 
 	if now.IsZero() || date == "" {
-		return "", fmt.Errorf("params `now` and `date` must be defined in query\n")
+		return "", fmt.Errorf(errInvalidQuery)
 	}
-
-	log.Println("After first ")
 
 	if _, err := strconv.Atoi(now.Format(TimeFormat)); err != nil || len(now.Format(TimeFormat)) != 8 {
-		return "", fmt.Errorf("param `now` must be in format YYYYMMDD\n")
+		return "", fmt.Errorf(errInvalidNowFormat)
 	}
 	if _, err := strconv.Atoi(date); err != nil || len(date) != 8 {
-		return "", fmt.Errorf("param `date` must be in format YYYYMMDD\n")
+		return "", fmt.Errorf(errInvalidDateFormat)
 	}
-
-	log.Println("After all init things")
 
 	if repeat == "" {
-		return "", nil //task deleted\n
+		return "", nil
 	}
+
 	repeatSep := strings.Split(repeat, " ")
 	repeatMeas := repeatSep[0]
 
 	if len(repeatSep) == 1 {
-		log.Println("solo")
 		switch repeatMeas {
 		case "d":
 			return "", fmt.Errorf("param `d` must be followed with a number \n")
@@ -141,9 +143,9 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		}
 
 	case "m":
-		repeatVals := repeatSep[1:] //  m ["4,5", "10,11"]
+		repeatVals := repeatSep[1:]
 		if len(repeatVals) > 2 {
-			log.Println("double")
+
 			return "", fmt.Errorf("`m` second value must be integer or array with values from 1 to 12")
 		}
 
@@ -218,7 +220,6 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 
 	}
 
-	log.Println("NEXT DATE END")
 	return "", nil
 }
 

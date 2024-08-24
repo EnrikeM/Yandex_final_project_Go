@@ -13,7 +13,7 @@ type GetTask struct {
 	Date    string `json:"date"`
 	Title   string `json:"title"`
 	Comment string `json:"comment"`
-	Repeat  string `json:"repeat"` //
+	Repeat  string `json:"repeat"`
 }
 
 func (a *API) GetTasksHandler(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +43,7 @@ func (a *API) GetTasksHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func getTasks(db *sql.DB, search string) ([]GetTask, error) {
+func getTasks(db *sql.DB, search string) ([]GetTask, error) { //вынести в utils?
 	var query string
 
 	if search == "" {

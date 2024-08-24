@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
 )
 
 func (a *API) GetTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -14,31 +16,22 @@ func (a *API) GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	taskID := r.URL.Query().Get("id")
 	if taskID == "" {
-		if err := json.NewEncoder(w).Encode(map[string]string{"error": "не указан ID"}); err != nil {
-			http.Error(w, "error encoding response", http.StatusInternalServerError)
-			return
-		}
+		ErrIDNotProvided.Error(w, http.StatusBadRequest)
 		return
 	}
 
 	task, err := getTask(a.DB, taskID)
 	if err != nil {
-		if err := json.NewEncoder(w).Encode(map[string]string{"error": "задача не найдена"}); err != nil {
-			http.Error(w, "error encoding response", http.StatusInternalServerError)
-			return
-		}
+		rErr := apierrors.New(err.Error())
+		rErr.Error(w, http.StatusBadRequest)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	if err = json.NewEncoder(w).Encode(task); err != nil {
-		http.Error(w, "error encoding response", http.StatusInternalServerError)
-		return
-	}
-
+	_ = json.NewEncoder(w).Encode(task)
 }
 
-func getTask(db *sql.DB, taskID string) (GetTask, error) {
+func getTask(db *sql.DB, taskID string) (GetTask, error) { //вынести в utils?
 	var task GetTask
 
 	query := "SELECT * FROM scheduler WHERE id = ?"

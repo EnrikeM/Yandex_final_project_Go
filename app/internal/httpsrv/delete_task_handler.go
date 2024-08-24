@@ -1,8 +1,13 @@
 package httpsrv
 
 import (
-	"encoding/json"
 	"net/http"
+
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
+)
+
+var (
+	ErrIDNotProvided = apierrors.New("id not provided")
 )
 
 func (a *API) DeleteTask(w http.ResponseWriter, r *http.Request) {
@@ -13,32 +18,19 @@ func (a *API) DeleteTask(w http.ResponseWriter, r *http.Request) {
 
 	taskID := r.URL.Query().Get("id")
 	if taskID == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		if err := json.NewEncoder(w).Encode(map[string]string{"error": "id not provided"}); err != nil {
-			http.Error(w, "error encoding response", http.StatusInternalServerError)
-			return
-		}
+		ErrIDNotProvided.Error(w, http.StatusBadRequest)
 		return
 	}
 
 	if _, err := getTask(a.DB, taskID); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		if err := json.NewEncoder(w).Encode(map[string]string{"error": "нет такого id"}); err != nil {
-			http.Error(w, "error encoding response", http.StatusInternalServerError)
-			return
-		}
+		err := apierrors.New(err.Error())
+		err.Error(w, http.StatusBadRequest)
 		return
 	}
 
 	if err := deleteTask(a.DB, taskID); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		if err := json.NewEncoder(w).Encode(map[string]string{"error": err.Error()}); err != nil {
-			http.Error(w, "error encoding response", http.StatusInternalServerError)
-			return
-		}
+		err := apierrors.New(err.Error())
+		err.Error(w, http.StatusBadRequest)
 		return
 	}
 

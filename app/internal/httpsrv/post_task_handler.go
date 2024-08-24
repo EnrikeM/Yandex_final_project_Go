@@ -36,10 +36,9 @@ func (a *API) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 	err = task.validate()
 	if err != nil {
 		log.Printf("error validating json: %v", err)
-		response := map[string]string{"error": err.Error()}
-		fmt.Println(response)
+		// response := map[string]string{"error": err.Error()}
 
-		if err = json.NewEncoder(w).Encode(response); err != nil {
+		if err = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()}); err != nil {
 			http.Error(w, "error encoding response", http.StatusInternalServerError)
 			return
 		}

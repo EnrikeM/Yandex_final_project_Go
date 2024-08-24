@@ -16,7 +16,7 @@ type GetTask struct {
 	Repeat  string `json:"repeat"` //
 }
 
-func (a *API) GetTaskHandler(w http.ResponseWriter, r *http.Request) {
+func (a *API) GetTasksHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return

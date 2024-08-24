@@ -28,7 +28,9 @@ func (a *API) Register(r chi.Router) {
 
 	r.Get("/api/nextdate", a.GetNextDateHandler)
 	r.Post("/api/task", a.PostTaskHandler)
-	r.Get("/api/tasks", a.GetTaskHandler)
+	r.Get("/api/task", a.GetTaskHandler)
+	r.Put("/api/task", a.PutTaskHandler)
+	r.Get("/api/tasks", a.GetTasksHandler)
 
 	r.Handle("/*", http.FileServer(http.Dir(a.config.WEB_DIR)))
 }

@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/validators"
 )
 
@@ -29,20 +30,15 @@ func (a *API) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&task)
 	if err != nil {
-		log.Printf("error decoding request json: %v", err)
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		rErr := apierrors.New(err.Error())
+		rErr.Error(w, http.StatusBadRequest)
 		return
 	}
 
 	err = task.validate()
 	if err != nil {
-		log.Printf("error validating json: %v", err)
-		// response := map[string]string{"error": err.Error()}
-
-		if err = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()}); err != nil {
-			http.Error(w, "error encoding response", http.StatusInternalServerError)
-			return
-		}
+		rErr := apierrors.New(err.Error())
+		rErr.Error(w, http.StatusBadRequest)
 		return
 	}
 
@@ -52,9 +48,7 @@ func (a *API) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := "INSERT INTO scheduler (date, title, comment, repeat) VALUES (?, ?, ?, ?)" // вынести query в getLastID
-	lastID, err := getLastId(task, query, a.DB)
-
+	lastID, err := getLastId(task, a.DB)
 	if err != nil {
 		log.Printf("error getting last id: %v", err)
 		http.Error(w, "error saving task", http.StatusInternalServerError)
@@ -70,13 +64,11 @@ func (a *API) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (t *Task) validate() error {
-	log.Println("validate start")
-
 	if t.Date == "" {
 		t.Date = time.Now().Format(validators.TimeFormat)
 	}
 
-	if _, err := time.Parse("20060102", t.Date); err != nil {
+	if _, err := time.Parse(validators.TimeFormat, t.Date); err != nil {
 		return fmt.Errorf("field `date` must be in format YYYYMMDD, but provided %w", err)
 	}
 
@@ -101,7 +93,9 @@ func (t *Task) validate() error {
 	return nil
 }
 
-func getLastId(task Task, query string, db *sql.DB) (string, error) {
+func getLastId(task Task, db *sql.DB) (string, error) {
+	query := "INSERT INTO scheduler (date, title, comment, repeat) VALUES (?, ?, ?, ?)"
+
 	result, err := db.Exec(query, task.Date, &task.Title, task.Comment, task.Repeat)
 	if err != nil {
 		return "", fmt.Errorf("error executing query: %w", err)

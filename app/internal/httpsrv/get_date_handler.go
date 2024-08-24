@@ -8,13 +8,11 @@ import (
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/validators"
 )
 
-var ErrParseTime = apierrors.New("error parsing time")
-
 func (a *API) GetNextDateHandler(w http.ResponseWriter, r *http.Request) {
 	nowStr := r.URL.Query().Get("now")
-	now, err := time.Parse("20060102", nowStr)
+	now, err := time.Parse(validators.TimeFormat, nowStr)
 	if err != nil {
-		ErrParseTime.Error(w, http.StatusBadRequest)
+		apierrors.ErrParseTime.Error(w, http.StatusBadRequest)
 		return
 	}
 

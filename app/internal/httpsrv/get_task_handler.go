@@ -16,7 +16,7 @@ func (a *API) GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	taskID := r.URL.Query().Get("id")
 	if taskID == "" {
-		ErrIDNotProvided.Error(w, http.StatusBadRequest)
+		apierrors.ErrIDNotProvided.Error(w, http.StatusBadRequest)
 		return
 	}
 

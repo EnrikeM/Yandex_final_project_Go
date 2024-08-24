@@ -2,11 +2,10 @@ package httpsrv
 
 import (
 	"database/sql"
-	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/validators"
 )
 
@@ -18,36 +17,22 @@ func (a *API) PostDoneHandler(w http.ResponseWriter, r *http.Request) {
 
 	taskID := r.URL.Query().Get("id")
 	if taskID == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		if err := json.NewEncoder(w).Encode(map[string]string{"error": "id cannot be null"}); err != nil {
-			http.Error(w, "error encoding response", http.StatusInternalServerError)
-			return
-		}
+		err := apierrors.ErrIDNotProvided
+		err.Error(w, http.StatusBadRequest)
 		return
 	}
-	//Вынести errors.go, куда добавить конструктор ошибок и метод String, куда будет писаться message
 
 	task, err := getTask(a.DB, taskID)
-	log.Println(task)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		if err = json.NewEncoder(w).Encode(map[string]string{"error": "error searching for task"}); err != nil {
-			http.Error(w, "error encoding response", http.StatusInternalServerError)
-			return
-		}
+		rErr := apierrors.New(err.Error())
+		rErr.Error(w, http.StatusBadRequest)
 		return
 	}
 
 	if task.Repeat == "" {
 		if err := deleteTask(a.DB, taskID); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-			if err = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()}); err != nil {
-				http.Error(w, "error encoding response", http.StatusInternalServerError)
-				return
-			}
+			rErr := apierrors.New(err.Error())
+			rErr.Error(w, http.StatusBadRequest)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -57,22 +42,14 @@ func (a *API) PostDoneHandler(w http.ResponseWriter, r *http.Request) {
 
 	task.Date, err = validators.NextDate(time.Now(), task.Date, task.Repeat)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		if err = json.NewEncoder(w).Encode(map[string]string{"error": "error getting next date"}); err != nil {
-			http.Error(w, "error encoding response", http.StatusInternalServerError)
-			return
-		}
+		rErr := apierrors.New(err.Error())
+		rErr.Error(w, http.StatusBadRequest) // возможно тут 500 лучше вернуть
 		return
 	}
 
 	if err = redactTask(a.DB, task); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		if err = json.NewEncoder(w).Encode(map[string]string{"error": "error redacting task"}); err != nil {
-			http.Error(w, "error encoding response", http.StatusInternalServerError)
-			return
-		}
+		rErr := apierrors.New(err.Error())
+		rErr.Error(w, http.StatusBadRequest) // возможно тут тоже 500 лучше вернуть
 		return
 	}
 

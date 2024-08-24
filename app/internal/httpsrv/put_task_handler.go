@@ -18,15 +18,13 @@ func (a *API) PutTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&task)
 	if err != nil {
-		if err := json.NewEncoder(w).Encode(map[string]string{"error": err.Error()}); err != nil {
-			http.Error(w, "error encoding response", http.StatusInternalServerError)
-			return
-		}
+		rErr := apierrors.New(err.Error())
+		rErr.Error(w, http.StatusBadRequest)
 		return
 	}
 
 	if task.ID == "" {
-		ErrIDNotProvided.Error(w, http.StatusBadRequest)
+		apierrors.ErrIDNotProvided.Error(w, http.StatusBadRequest)
 		return
 	}
 
@@ -45,27 +43,18 @@ func (a *API) PutTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := getTask(a.DB, task.ID); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		if err := json.NewEncoder(w).Encode(map[string]string{"error": "нет такого id"}); err != nil {
-			http.Error(w, "error encoding response", http.StatusInternalServerError)
-			return
-		}
+		apierrors.ErrNoSuchTask.Error(w, http.StatusBadRequest)
 		return
 	}
 
 	if err = redactTask(a.DB, task); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		if err := json.NewEncoder(w).Encode(map[string]string{"error": err.Error()}); err != nil {
-			return // Вынести
-		}
+		rErr := apierrors.New(err.Error())
+		rErr.Error(w, http.StatusBadRequest)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	_, _ = w.Write([]byte("{}"))
-
 }
 
 func redactTask(db *sql.DB, task GetTask) error {

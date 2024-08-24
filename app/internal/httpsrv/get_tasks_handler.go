@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
 )
 
 type GetTask struct {
@@ -25,8 +27,8 @@ func (a *API) GetTasksHandler(w http.ResponseWriter, r *http.Request) {
 
 	tasks, err := getTasks(a.DB, search)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte(fmt.Sprintf("error getting tasks: %s", err)))
+		rErr := apierrors.New(err.Error())
+		rErr.Error(w, http.StatusBadRequest) // возможно тут 500 лучше вернуть
 		return
 	}
 
@@ -36,11 +38,7 @@ func (a *API) GetTasksHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	if err = json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, "error encoding response", http.StatusInternalServerError)
-		return
-	}
-
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 func getTasks(db *sql.DB, search string) ([]GetTask, error) { //вынести в utils?
@@ -55,7 +53,6 @@ func getTasks(db *sql.DB, search string) ([]GetTask, error) { //вынести �
 			search = searchDate.Format("20060102")
 			query = "SELECT * FROM scheduler WHERE date LIKE ? ORDER BY date DESC LIMIT 10"
 		} else {
-
 			query = "SELECT * FROM scheduler WHERE title LIKE ? OR comment LIKE ? ORDER BY date LIMIT 10"
 		}
 	}

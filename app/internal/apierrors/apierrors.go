@@ -11,7 +11,10 @@ type apiErr struct {
 }
 
 var (
-	EnvErr = New(("cannot get environment"))
+	EnvErr           = New("cannot get environment")
+	ErrIDNotProvided = New("id not provided")
+	ErrNoSuchTask    = New("no task with provided id")
+	ErrParseTime     = New("error parsing time")
 )
 
 func New(err string) apiErr {
@@ -27,5 +30,4 @@ func (err *apiErr) Error(w http.ResponseWriter, statusCode int) {
 		http.Error(w, "error encoding response", http.StatusInternalServerError)
 		return
 	}
-
 }

@@ -8,7 +8,6 @@ import (
 	"time"
 )
 
-// TODO: Refactor
 const TimeFormat = "20060102"
 
 const (
@@ -19,6 +18,11 @@ const (
 	errInvalidDay         = "`m` value must be integer or array with values from -2 to 31 excluding 0"
 	errInvalidWeekday     = "`w` value must be integer or array with values from 1 to 7"
 	errInvalidQuery       = "params `now` and `date` must be defined in query"
+	errForbiddenDUsage    = "param `d` must be followed with a number"
+	errForbiddenYUsage    = "`y` must be provided without value"
+	errValueDTooBig       = "value of `d` must be less than 400"
+	errForbiddenMValue    = "`m` second value must be integer or array with values from 1 to 12"
+	errForbidden
 )
 
 var weekDay = map[string]string{
@@ -71,160 +75,187 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 	repeatSep := strings.Split(repeat, " ")
 	repeatMeas := repeatSep[0]
 
-	if len(repeatSep) == 1 {
-		switch repeatMeas {
-		case "d":
-			return "", fmt.Errorf("param `d` must be followed with a number \n")
-		case "y":
-			if dateFormatted.Sub(now) < 0 {
-				for dateFormatted.Sub(now) < 0 {
-					dateFormatted = dateFormatted.AddDate(1, 0, 0)
-				}
-				return dateFormatted.Format(TimeFormat), nil
-			}
-			return dateFormatted.AddDate(1, 0, 0).Format(TimeFormat), nil
-		default:
-			return "", fmt.Errorf("%s is forbidden, please use `d` or `y", repeat)
+	switch repeatMeas {
+	case "d":
+		val, err := dayHandler(dateFormatted, now, repeatSep)
+		if err != nil {
+			return "", err
 		}
+		return val, nil
+
+	case "y":
+		val, err := yearHandler(dateFormatted, now, repeatSep)
+		if err != nil {
+			return "", err
+		}
+		return val, nil
+
+	case "w":
+		val, err := weekHandler(dateFormatted, now, repeatSep)
+		if err != nil {
+			return "", err
+		}
+		return val, nil
+
+	case "m":
+		val, err := monthHandler(dateFormatted, now, repeatSep)
+		if err != nil {
+			return "", err
+		}
+		return val, nil
+
+	default:
+		return "", fmt.Errorf(errForbiddenRepeat, repeat)
+	}
+
+}
+
+func dayHandler(dateFormatted, now time.Time, repeatSep []string) (string, error) {
+	if len(repeatSep) == 1 {
+		return "", fmt.Errorf(errForbiddenDUsage)
 	}
 
 	repeatValStr := repeatSep[1]
+	repeatVal, err := strconv.Atoi(repeatValStr)
+	if err != nil {
+		return "", fmt.Errorf(errInvalidRepeatValue)
+	}
+	if repeatVal > 400 {
+		return "", fmt.Errorf(errValueDTooBig)
+	}
+	if dateFormatted.Sub(now) < 0 {
+		dateFormatted = makeDate(dateFormatted, now, 0, 0, repeatVal)
+		return dateFormatted.Format(TimeFormat), nil
+	}
 
-	switch repeatMeas {
-	case "d":
-		repeatVal, err := strconv.Atoi(repeatValStr)
-		if err != nil {
-			return "", fmt.Errorf("value of timePeriod must be an integer")
-		}
+	return dateFormatted.AddDate(0, 0, repeatVal).Format(TimeFormat), nil
+}
 
-		if repeatVal > 400 {
-			return "", fmt.Errorf("value of `d` must be less than 400")
+func weekHandler(dateFormatted, now time.Time, repeatSep []string) (string, error) {
+	if len(repeatSep) == 1 || len(repeatSep) > 2 {
+		return "", fmt.Errorf(errInvalidWeekday)
+	}
+	repeatValStr := repeatSep[1]
+	weekdays := strings.Split(repeatValStr, ",")
+	for _, weekday := range weekdays {
+		weekdayInt, err := strconv.Atoi(weekday)
+		if err != nil || weekdayInt < 1 || weekdayInt > 7 {
+			return "", fmt.Errorf(errInvalidWeekday)
 		}
-		if dateFormatted.Sub(now) < 0 {
-			for dateFormatted.Sub(now) < 0 {
-				dateFormatted = dateFormatted.AddDate(0, 0, repeatVal)
-			} // Возможно, стоит убрать if
-			return dateFormatted.Format(TimeFormat), nil
-		}
-		return dateFormatted.AddDate(0, 0, repeatVal).Format(TimeFormat), nil
+	}
 
-	case "y":
-		return "", fmt.Errorf("`y` must be provided without value")
+	dateFormatted = makeDate(dateFormatted, now, 0, 0, 1)
 
-	case "w":
-		if len(repeatSep) > 2 {
-			return "", fmt.Errorf("`w` value must be integer or array with values from 1 to 7")
-		}
-		weekdays := strings.Split(repeatValStr, ",") //[4,5]
+	if dateFormatted.String() == weekDay[weekdays[0]] {
+		dateFormatted = dateFormatted.AddDate(0, 0, 1)
+	}
+
+	for {
 		for _, weekday := range weekdays {
-			weekdayInt, err := strconv.Atoi(weekday)
-			if err != nil || weekdayInt < 1 || weekdayInt > 7 {
-				return "", fmt.Errorf("`w` value must be integer or array with values from 1 to 7")
+			if dateFormatted.Weekday().String() == weekDay[weekday] {
+				return dateFormatted.Format(TimeFormat), nil
 			}
 		}
+		dateFormatted = dateFormatted.AddDate(0, 0, 1)
+	}
+}
 
-		if dateFormatted.Sub(now).Hours() < 24 {
-			for dateFormatted.Sub(now).Hours() < 24 {
-				dateFormatted = dateFormatted.AddDate(0, 0, 1)
-			}
-		} // убрать иф?
+func monthHandler(dateFormatted, now time.Time, repeatSep []string) (string, error) {
+	if len(repeatSep) < 1 {
+		return "", fmt.Errorf(errForbiddenMValue)
+	}
+	repeatVals := repeatSep[1:]
+	if len(repeatVals) > 2 {
+		return "", fmt.Errorf(errForbiddenMValue)
+	}
 
-		if dateFormatted.String() == weekDay[weekdays[0]] {
-			dateFormatted = dateFormatted.AddDate(0, 0, 1)
+	daysStr := strings.Split(repeatVals[0], ",")
+	var days []int
+
+	for _, val := range daysStr {
+		day, err := strconv.Atoi(val)
+		if err != nil || day < -2 || day == 0 || day > 31 {
+			return "", fmt.Errorf(errInvalidDay)
 		}
-
-		for {
-			for _, weekday := range weekdays {
-				if dateFormatted.Weekday().String() == weekDay[weekday] {
-					return dateFormatted.Format(TimeFormat), nil
-				}
-			}
-			dateFormatted = dateFormatted.AddDate(0, 0, 1)
+		if day == -1 || day == -2 {
+			day = getDayOfMonth(dateFormatted, day)
 		}
+		days = append(days, day)
+	}
+	sort.Ints(days)
 
-	case "m":
-		repeatVals := repeatSep[1:]
-		if len(repeatVals) > 2 {
+	dateFormatted = makeDate(dateFormatted, now, 0, 0, 1)
 
-			return "", fmt.Errorf("`m` second value must be integer or array with values from 1 to 12")
-		}
+	if dateFormatted.Day() == days[0] {
+		dateFormatted = dateFormatted.AddDate(0, 0, 1)
+	}
 
-		daysStr := strings.Split(repeatVals[0], ",")
-		var days []int
+	if len(repeatVals) == 2 {
+		var months []int
+		monthsStr := strings.Split(repeatVals[1], ",")
 
-		for _, val := range daysStr {
-			day, err := strconv.Atoi(val)
-			if err != nil || day < -2 || day == 0 || day > 31 {
-				return "", fmt.Errorf("`m` value must be integer or array with values from -2 to 31")
+		for _, val := range monthsStr {
+			month, err := strconv.Atoi(val)
+			if err != nil || month < 1 || month > 12 {
+				return "", fmt.Errorf(errInvalidDay)
 			}
-			if day == -1 || day == -2 {
-				day = getDayOfMonth(dateFormatted, day)
-			}
-			days = append(days, day)
-		}
-		sort.Ints(days)
-
-		if dateFormatted.Sub(now).Hours() < 24 {
-			for dateFormatted.Sub(now).Hours() < 24 {
-				dateFormatted = dateFormatted.AddDate(0, 0, 1)
-			}
-		}
-
-		if dateFormatted.Day() == days[0] {
-			dateFormatted = dateFormatted.AddDate(0, 0, 1)
-		}
-
-		if len(repeatVals) == 2 {
-			var months []int
-			monthsStr := strings.Split(repeatVals[1], ",")
-
-			for _, val := range monthsStr {
-				month, err := strconv.Atoi(val)
-				if err != nil || month < 1 || month > 12 {
-					return "", fmt.Errorf("`m` value must be integer or array with values from -2 to 31")
-				}
-				months = append(months, month)
-
-			}
-			sort.Ints(months)
-
-		dayStart:
-			for {
-				for _, day := range days {
-					if dateFormatted.Day() == day {
-						break dayStart
-					}
-				}
-				dateFormatted = dateFormatted.AddDate(0, 0, 1)
-			}
-
-			for {
-				for _, month := range months {
-					if dateFormatted.Month().String() == monthsMap[month] {
-						return dateFormatted.Format(TimeFormat), nil
-					}
-				}
-				dateFormatted = dateFormatted.AddDate(0, 1, 0)
-			}
+			months = append(months, month)
 
 		}
+		sort.Ints(months)
 
+	dayStart:
 		for {
 			for _, day := range days {
 				if dateFormatted.Day() == day {
-					return dateFormatted.Format(TimeFormat), nil
+					break dayStart
 				}
 			}
 			dateFormatted = dateFormatted.AddDate(0, 0, 1)
+		}
+
+		for {
+			for _, month := range months {
+				if dateFormatted.Month().String() == monthsMap[month] {
+					return dateFormatted.Format(TimeFormat), nil
+				}
+			}
+			dateFormatted = dateFormatted.AddDate(0, 1, 0)
 		}
 
 	}
 
-	return "", nil
+	for {
+		for _, day := range days {
+			if dateFormatted.Day() == day {
+				return dateFormatted.Format(TimeFormat), nil
+			}
+		}
+		dateFormatted = dateFormatted.AddDate(0, 0, 1)
+	}
+}
+
+func yearHandler(dateFormatted, now time.Time, repeatSep []string) (string, error) {
+	if len(repeatSep) != 1 {
+		return "", fmt.Errorf(errForbiddenYUsage)
+	}
+	if dateFormatted.Sub(now) < 0 {
+		dateFormatted = makeDate(dateFormatted, now, 1, 0, 0)
+		return dateFormatted.Format(TimeFormat), nil
+	}
+
+	return dateFormatted.AddDate(1, 0, 0).Format(TimeFormat), nil
 }
 
 func getDayOfMonth(date time.Time, shift int) int {
 	firstOfMonth := time.Date(date.Year(), date.Month(), 1, 0, 0, 0, 0, date.Location())
 	LastOfMonth := firstOfMonth.AddDate(0, 1, shift).Day()
 	return LastOfMonth
+}
+
+func makeDate(dateFormatted, now time.Time, year, month, day int) time.Time {
+	for dateFormatted.Sub(now).Hours() < 24 {
+		dateFormatted = dateFormatted.AddDate(year, month, day)
+	}
+	return dateFormatted
 }

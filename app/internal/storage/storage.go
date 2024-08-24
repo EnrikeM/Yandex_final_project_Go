@@ -61,3 +61,5 @@ func (dbParams *DBParams) createDatabase(dbFile string) error {
 	dbParams.DB = db
 	return nil
 }
+
+// разумно остальные getTask и тп добавить сюда?

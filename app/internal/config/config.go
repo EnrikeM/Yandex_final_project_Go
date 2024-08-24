@@ -33,7 +33,6 @@ func getExecutable(key string) string {
 	dbFile := os.Getenv(key)
 
 	if dbFile == "" {
-		// Use the current working directory
 		cwd, err := os.Getwd()
 		if err != nil {
 			log.Fatal(fmt.Errorf("error getting current working directory: %w", err))

@@ -25,12 +25,16 @@ func NewAPI(db *sql.DB, config config.Config) *API {
 }
 
 func (a *API) Register(r chi.Router) {
-
+	//роутинг добавить нормальный
 	r.Get("/api/nextdate", a.GetNextDateHandler)
 	r.Post("/api/task", a.PostTaskHandler)
 	r.Get("/api/task", a.GetTaskHandler)
 	r.Put("/api/task", a.PutTaskHandler)
+
 	r.Get("/api/tasks", a.GetTasksHandler)
+
+	r.Post("/api/task/done", a.PostDoneHandler)
+	r.Delete("/api/task", a.DeleteTask)
 
 	r.Handle("/*", http.FileServer(http.Dir(a.config.WEB_DIR)))
 }

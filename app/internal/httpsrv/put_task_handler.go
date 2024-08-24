@@ -34,7 +34,7 @@ func (a *API) PutTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var validateTask = Task{
-		Date:    &task.Date,
+		Date:    task.Date,
 		Title:   &task.Title,
 		Comment: task.Comment,
 		Repeat:  task.Repeat,
@@ -71,7 +71,6 @@ func (a *API) PutTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK) // Optional: Set status code to 200 OK
 	_, _ = w.Write([]byte("{}"))
 
 }
@@ -82,7 +81,7 @@ func redactTask(db *sql.DB, task GetTask) error {
 	UPDATE scheduler 
 	SET date = ?, title = ?, comment = ?, repeat = ?, id = ?
 	WHERE id = ?;`
-	_, err := db.Exec(query, &task.Date, &task.Title, task.Comment, task.Repeat, task.ID, task.ID)
+	_, err := db.Exec(query, task.Date, &task.Title, task.Comment, task.Repeat, task.ID, task.ID)
 	if err != nil {
 		return err
 	}

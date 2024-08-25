@@ -3,6 +3,7 @@ package storage
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -111,4 +112,21 @@ func DeleteTask(db *sql.DB, taskID string) error {
 		return err
 	}
 	return nil
+}
+
+func GetLastId(task Task, db *sql.DB) (string, error) {
+	query := "INSERT INTO scheduler (date, title, comment, repeat) VALUES (?, ?, ?, ?)"
+
+	result, err := db.Exec(query, task.Date, &task.Title, task.Comment, task.Repeat)
+	if err != nil {
+		return "", fmt.Errorf("error executing query: %w", err)
+	}
+
+	resInt, err := (result.LastInsertId())
+	if err != nil {
+		return "", fmt.Errorf("error getting last id: %w", err)
+	}
+	res := strconv.Itoa(int(resInt))
+
+	return res, nil
 }

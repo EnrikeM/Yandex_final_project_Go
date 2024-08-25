@@ -1,16 +1,12 @@
 package httpsrv
 
 import (
-	"database/sql"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
-	"strconv"
-	"time"
 
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
-	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/calc"
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/storage"
 )
 
 type Task struct {
@@ -18,6 +14,7 @@ type Task struct {
 	Title   *string `json:"title"`
 	Comment string  `json:"comment,omitempty"`
 	Repeat  string  `json:"repeat,omitempty"`
+	// id      string  `json:"-"`
 }
 
 func (a *API) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -26,7 +23,7 @@ func (a *API) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var task Task
+	var task storage.Task
 
 	err := json.NewDecoder(r.Body).Decode(&task)
 	if err != nil {
@@ -35,7 +32,7 @@ func (a *API) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = task.validate()
+	err = validate(&task)
 	if err != nil {
 		rErr := apierrors.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest)
@@ -48,7 +45,7 @@ func (a *API) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	lastID, err := getLastId(task, a.DB)
+	lastID, err := storage.GetLastId(task, a.DB)
 	if err != nil {
 		log.Printf("error getting last id: %v", err)
 		http.Error(w, "error saving task", http.StatusInternalServerError)
@@ -61,51 +58,4 @@ func (a *API) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "error encoding response", http.StatusInternalServerError)
 		return
 	}
-}
-
-func (t *Task) validate() error {
-	if t.Date == "" {
-		t.Date = time.Now().Format(calc.TimeFormat)
-	}
-
-	if _, err := time.Parse(calc.TimeFormat, t.Date); err != nil {
-		return fmt.Errorf("field `date` must be in format YYYYMMDD, but provided %w", err)
-	}
-
-	if t.Title == nil || *t.Title == "" {
-		return fmt.Errorf("field `title` cannot be empty")
-	}
-
-	nextDate, err := calc.NextDate(time.Now(), t.Date, t.Repeat)
-	if err != nil {
-		return fmt.Errorf("couldn't resolve next date: %w", err)
-	}
-
-	if t.Date < time.Now().Format(calc.TimeFormat) {
-		if t.Repeat == "" {
-			now := time.Now().Format(calc.TimeFormat)
-			t.Date = now
-		} else {
-			t.Date = nextDate
-		}
-	}
-
-	return nil
-}
-
-func getLastId(task Task, db *sql.DB) (string, error) {
-	query := "INSERT INTO scheduler (date, title, comment, repeat) VALUES (?, ?, ?, ?)"
-
-	result, err := db.Exec(query, task.Date, &task.Title, task.Comment, task.Repeat)
-	if err != nil {
-		return "", fmt.Errorf("error executing query: %w", err)
-	}
-
-	resInt, err := (result.LastInsertId())
-	if err != nil {
-		return "", fmt.Errorf("error getting last id: %w", err)
-	}
-	res := strconv.Itoa(int(resInt))
-
-	return res, nil
 }

@@ -39,5 +39,3 @@ func (dbParams *DBParams) NewConnection() error {
 	dbParams.DB = db
 	return nil
 }
-
-// разумно остальные getTask и тп добавить сюда?

@@ -30,17 +30,3 @@ func (a *API) GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	_ = json.NewEncoder(w).Encode(task)
 }
-
-// func getTask(db *sql.DB, taskID string) (storage.GetTask, error) { //вынести в utils?
-// 	var task storage.GetTask
-
-// 	query := "SELECT * FROM scheduler WHERE id = ?"
-// 	row := db.QueryRow(query, taskID)
-
-// 	err := row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
-// 	if err != nil {
-// 		return storage.GetTask{}, err
-// 	}
-
-// 	return task, nil
-// }

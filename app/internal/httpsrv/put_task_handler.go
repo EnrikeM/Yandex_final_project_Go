@@ -28,14 +28,14 @@ func (a *API) PutTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var validateTask = Task{
+	var validateTask = storage.Task{
 		Date:    task.Date,
-		Title:   &task.Title,
+		Title:   task.Title,
 		Comment: task.Comment,
 		Repeat:  task.Repeat,
 	}
 
-	err = validateTask.validate()
+	err = validate(&validateTask)
 	if err != nil {
 		rErr := apierrors.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest)

@@ -30,7 +30,7 @@ func (a *API) Register(r chi.Router) {
 		r.Get("/", a.GetTaskHandler)
 		r.Put("/", a.PutTaskHandler)
 		r.Post("/done", a.PostDoneHandler)
-		r.Delete("/", a.DeleteTask)
+		r.Delete("/", a.DeleteTaskHandler)
 	})
 
 	r.Get("/api/nextdate", a.GetNextDateHandler)

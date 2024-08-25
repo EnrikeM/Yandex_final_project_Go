@@ -61,12 +61,3 @@ func (a *API) PostDoneHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	_, _ = w.Write([]byte("{}"))
 }
-
-// func deleteTask(db *sql.DB, taskID string) error {
-// 	query := "DELETE FROM scheduler WHERE id = ?"
-// 	_, err := db.Exec(query, taskID)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }

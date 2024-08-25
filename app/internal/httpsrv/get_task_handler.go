@@ -1,11 +1,11 @@
 package httpsrv
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
 
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/storage"
 )
 
 func (a *API) GetTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +20,7 @@ func (a *API) GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, err := getTask(a.DB, taskID)
+	task, err := storage.GetTask(a.DB, taskID)
 	if err != nil {
 		rErr := apierrors.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest)
@@ -31,16 +31,16 @@ func (a *API) GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(task)
 }
 
-func getTask(db *sql.DB, taskID string) (GetTask, error) { //вынести в utils?
-	var task GetTask
+// func getTask(db *sql.DB, taskID string) (storage.GetTask, error) { //вынести в utils?
+// 	var task storage.GetTask
 
-	query := "SELECT * FROM scheduler WHERE id = ?"
-	row := db.QueryRow(query, taskID)
+// 	query := "SELECT * FROM scheduler WHERE id = ?"
+// 	row := db.QueryRow(query, taskID)
 
-	err := row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
-	if err != nil {
-		return GetTask{}, err
-	}
+// 	err := row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+// 	if err != nil {
+// 		return storage.GetTask{}, err
+// 	}
 
-	return task, nil
-}
+// 	return task, nil
+// }

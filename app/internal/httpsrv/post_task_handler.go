@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
-	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/validators"
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/calc"
 )
 
 type Task struct {
@@ -65,10 +65,10 @@ func (a *API) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 func (t *Task) validate() error {
 	if t.Date == "" {
-		t.Date = time.Now().Format(validators.TimeFormat)
+		t.Date = time.Now().Format(calc.TimeFormat)
 	}
 
-	if _, err := time.Parse(validators.TimeFormat, t.Date); err != nil {
+	if _, err := time.Parse(calc.TimeFormat, t.Date); err != nil {
 		return fmt.Errorf("field `date` must be in format YYYYMMDD, but provided %w", err)
 	}
 
@@ -76,14 +76,14 @@ func (t *Task) validate() error {
 		return fmt.Errorf("field `title` cannot be empty")
 	}
 
-	nextDate, err := validators.NextDate(time.Now(), t.Date, t.Repeat)
+	nextDate, err := calc.NextDate(time.Now(), t.Date, t.Repeat)
 	if err != nil {
 		return fmt.Errorf("couldn't resolve next date: %w", err)
 	}
 
-	if t.Date < time.Now().Format(validators.TimeFormat) {
+	if t.Date < time.Now().Format(calc.TimeFormat) {
 		if t.Repeat == "" {
-			now := time.Now().Format(validators.TimeFormat)
+			now := time.Now().Format(calc.TimeFormat)
 			t.Date = now
 		} else {
 			t.Date = nextDate

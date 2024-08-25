@@ -41,11 +41,11 @@ func (a *API) Register(r chi.Router) {
 
 func (a *API) Start() error {
 	a.Register(a.r)
-	fmt.Println("server start")
-
+	log.Println("server start")
 	err := http.ListenAndServe(fmt.Sprintf(":%s", a.config.TODO_PORT), a.r)
 	if err != nil {
 		log.Fatal(fmt.Errorf("error starting server %w", err))
 	}
+
 	return nil
 }

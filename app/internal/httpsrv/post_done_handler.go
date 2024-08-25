@@ -1,12 +1,13 @@
 package httpsrv
 
 import (
-	"database/sql"
+	"encoding/json"
 	"net/http"
 	"time"
 
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
-	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/validators"
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/calc"
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/storage"
 )
 
 func (a *API) PostDoneHandler(w http.ResponseWriter, r *http.Request) {
@@ -22,7 +23,7 @@ func (a *API) PostDoneHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, err := getTask(a.DB, taskID)
+	task, err := storage.GetTask(a.DB, taskID)
 	if err != nil {
 		rErr := apierrors.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest)
@@ -30,7 +31,7 @@ func (a *API) PostDoneHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if task.Repeat == "" {
-		if err := deleteTask(a.DB, taskID); err != nil {
+		if err := storage.DeleteTask(a.DB, taskID); err != nil {
 			rErr := apierrors.New(err.Error())
 			rErr.Error(w, http.StatusBadRequest)
 			return
@@ -40,16 +41,20 @@ func (a *API) PostDoneHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task.Date, err = validators.NextDate(time.Now(), task.Date, task.Repeat)
+	task.Date, err = calc.NextDate(time.Now(), task.Date, task.Repeat)
 	if err != nil {
 		rErr := apierrors.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest) // возможно тут 500 лучше вернуть
 		return
 	}
 
-	if err = redactTask(a.DB, task); err != nil {
-		rErr := apierrors.New(err.Error())
-		rErr.Error(w, http.StatusBadRequest) // возможно тут тоже 500 лучше вернуть
+	if err = storage.RedactTask(a.DB, task); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		if err = json.NewEncoder(w).Encode(map[string]string{"error": "error redacting task"}); err != nil {
+			http.Error(w, "error encoding response", http.StatusInternalServerError)
+			return
+		}
 		return
 	}
 
@@ -57,11 +62,11 @@ func (a *API) PostDoneHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte("{}"))
 }
 
-func deleteTask(db *sql.DB, taskID string) error {
-	query := "DELETE FROM scheduler WHERE id = ?"
-	_, err := db.Exec(query, taskID)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+// func deleteTask(db *sql.DB, taskID string) error {
+// 	query := "DELETE FROM scheduler WHERE id = ?"
+// 	_, err := db.Exec(query, taskID)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }

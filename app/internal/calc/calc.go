@@ -1,4 +1,4 @@
-package validators
+package calc
 
 import (
 	"fmt"
@@ -22,7 +22,6 @@ const (
 	errForbiddenYUsage    = "`y` must be provided without value"
 	errValueDTooBig       = "value of `d` must be less than 400"
 	errForbiddenMValue    = "`m` second value must be integer or array with values from 1 to 12"
-	errForbidden
 )
 
 var weekDay = map[string]string{
@@ -77,32 +76,32 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 
 	switch repeatMeas {
 	case "d":
-		val, err := dayHandler(dateFormatted, now, repeatSep)
+		date, err := dayHandler(dateFormatted, now, repeatSep)
 		if err != nil {
 			return "", err
 		}
-		return val, nil
+		return date, nil
 
 	case "y":
-		val, err := yearHandler(dateFormatted, now, repeatSep)
+		date, err := yearHandler(dateFormatted, now, repeatSep)
 		if err != nil {
 			return "", err
 		}
-		return val, nil
+		return date, nil
 
 	case "w":
-		val, err := weekHandler(dateFormatted, now, repeatSep)
+		date, err := weekHandler(dateFormatted, now, repeatSep)
 		if err != nil {
 			return "", err
 		}
-		return val, nil
+		return date, nil
 
 	case "m":
-		val, err := monthHandler(dateFormatted, now, repeatSep)
+		date, err := monthHandler(dateFormatted, now, repeatSep)
 		if err != nil {
 			return "", err
 		}
-		return val, nil
+		return date, nil
 
 	default:
 		return "", fmt.Errorf(errForbiddenRepeat, repeat)
@@ -169,20 +168,10 @@ func monthHandler(dateFormatted, now time.Time, repeatSep []string) (string, err
 		return "", fmt.Errorf(errForbiddenMValue)
 	}
 
-	daysStr := strings.Split(repeatVals[0], ",")
-	var days []int
-
-	for _, val := range daysStr {
-		day, err := strconv.Atoi(val)
-		if err != nil || day < -2 || day == 0 || day > 31 {
-			return "", fmt.Errorf(errInvalidDay)
-		}
-		if day == -1 || day == -2 {
-			day = getDayOfMonth(dateFormatted, day)
-		}
-		days = append(days, day)
+	days, err := getDays(dateFormatted, repeatVals)
+	if err != nil {
+		return "", err
 	}
-	sort.Ints(days)
 
 	dateFormatted = makeDate(dateFormatted, now, 0, 0, 1)
 
@@ -190,19 +179,78 @@ func monthHandler(dateFormatted, now time.Time, repeatSep []string) (string, err
 		dateFormatted = dateFormatted.AddDate(0, 0, 1)
 	}
 
-	if len(repeatVals) == 2 {
-		var months []int
-		monthsStr := strings.Split(repeatVals[1], ",")
+	val, err := getMonthDate(dateFormatted, days, repeatVals)
+	if err != nil {
+		return "", err
+	}
+	return val, nil
+}
 
-		for _, val := range monthsStr {
-			month, err := strconv.Atoi(val)
-			if err != nil || month < 1 || month > 12 {
-				return "", fmt.Errorf(errInvalidDay)
-			}
-			months = append(months, month)
+func yearHandler(dateFormatted, now time.Time, repeatSep []string) (string, error) {
+	if len(repeatSep) != 1 {
+		return "", fmt.Errorf(errForbiddenYUsage)
+	}
+	if dateFormatted.Sub(now) < 0 {
+		dateFormatted = makeDate(dateFormatted, now, 1, 0, 0)
+		return dateFormatted.Format(TimeFormat), nil
+	}
 
+	return dateFormatted.AddDate(1, 0, 0).Format(TimeFormat), nil
+}
+
+func getDayOfMonth(date time.Time, shift int) int {
+	firstOfMonth := time.Date(date.Year(), date.Month(), 1, 0, 0, 0, 0, date.Location())
+	LastOfMonth := firstOfMonth.AddDate(0, 1, shift).Day()
+	return LastOfMonth
+}
+
+func makeDate(dateFormatted, now time.Time, year, month, day int) time.Time {
+	for dateFormatted.Sub(now).Hours() < 24 {
+		dateFormatted = dateFormatted.AddDate(year, month, day)
+	}
+	return dateFormatted
+}
+
+func getDays(dateFormatted time.Time, repeatVals []string) ([]int, error) {
+	daysStr := strings.Split(repeatVals[0], ",")
+	var days []int
+
+	for _, val := range daysStr {
+		day, err := strconv.Atoi(val)
+		if err != nil || day < -2 || day == 0 || day > 31 {
+			return nil, fmt.Errorf(errInvalidDay)
 		}
-		sort.Ints(months)
+		if day == -1 || day == -2 {
+			day = getDayOfMonth(dateFormatted, day)
+		}
+		days = append(days, day)
+	}
+	sort.Ints(days)
+	return days, nil
+}
+
+func getMonths(repeatVals []string) ([]int, error) {
+	var months []int
+	monthsStr := strings.Split(repeatVals[1], ",")
+
+	for _, val := range monthsStr {
+		month, err := strconv.Atoi(val)
+		if err != nil || month < 1 || month > 12 {
+			return nil, fmt.Errorf(errInvalidDay)
+		}
+		months = append(months, month)
+
+	}
+	sort.Ints(months)
+	return months, nil
+}
+
+func getMonthDate(dateFormatted time.Time, days []int, repeatVals []string) (string, error) {
+	if len(repeatVals) == 2 {
+		months, err := getMonths(repeatVals)
+		if err != nil {
+			return "", err
+		}
 
 	dayStart:
 		for {
@@ -233,29 +281,4 @@ func monthHandler(dateFormatted, now time.Time, repeatSep []string) (string, err
 		}
 		dateFormatted = dateFormatted.AddDate(0, 0, 1)
 	}
-}
-
-func yearHandler(dateFormatted, now time.Time, repeatSep []string) (string, error) {
-	if len(repeatSep) != 1 {
-		return "", fmt.Errorf(errForbiddenYUsage)
-	}
-	if dateFormatted.Sub(now) < 0 {
-		dateFormatted = makeDate(dateFormatted, now, 1, 0, 0)
-		return dateFormatted.Format(TimeFormat), nil
-	}
-
-	return dateFormatted.AddDate(1, 0, 0).Format(TimeFormat), nil
-}
-
-func getDayOfMonth(date time.Time, shift int) int {
-	firstOfMonth := time.Date(date.Year(), date.Month(), 1, 0, 0, 0, 0, date.Location())
-	LastOfMonth := firstOfMonth.AddDate(0, 1, shift).Day()
-	return LastOfMonth
-}
-
-func makeDate(dateFormatted, now time.Time, year, month, day int) time.Time {
-	for dateFormatted.Sub(now).Hours() < 24 {
-		dateFormatted = dateFormatted.AddDate(year, month, day)
-	}
-	return dateFormatted
 }

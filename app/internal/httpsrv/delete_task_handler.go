@@ -4,10 +4,7 @@ import (
 	"net/http"
 
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
-)
-
-var (
-	ErrIDNotProvided = apierrors.New("id not provided")
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/storage"
 )
 
 func (a *API) DeleteTask(w http.ResponseWriter, r *http.Request) {
@@ -18,17 +15,17 @@ func (a *API) DeleteTask(w http.ResponseWriter, r *http.Request) {
 
 	taskID := r.URL.Query().Get("id")
 	if taskID == "" {
-		ErrIDNotProvided.Error(w, http.StatusBadRequest)
+		apierrors.ErrIDNotProvided.Error(w, http.StatusBadRequest)
 		return
 	}
 
-	if _, err := getTask(a.DB, taskID); err != nil {
+	if _, err := storage.GetTask(a.DB, taskID); err != nil {
 		err := apierrors.New(err.Error())
 		err.Error(w, http.StatusBadRequest)
 		return
 	}
 
-	if err := deleteTask(a.DB, taskID); err != nil {
+	if err := storage.DeleteTask(a.DB, taskID); err != nil {
 		err := apierrors.New(err.Error())
 		err.Error(w, http.StatusBadRequest)
 		return

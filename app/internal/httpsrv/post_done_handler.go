@@ -10,7 +10,19 @@ import (
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/storage"
 )
 
-func (a *API) PostDoneHandler(w http.ResponseWriter, r *http.Request) {
+// postDoneHandler godoc
+//
+//	@Summary		mark  task as done
+//	@Description	mark  task as done by task id
+//	@Produce		json
+//	@Param			id	query		string	true	"id"
+//	@Success		200	{object}	nil
+//	@Failure		400	{object}	map[string]string
+//	@Failure		500	{object}	map[string]string
+//	@Router			/api/task/done [post]
+//
+// .
+func (a *API) postDoneHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return

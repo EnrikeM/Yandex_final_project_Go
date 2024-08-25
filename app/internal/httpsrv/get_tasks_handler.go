@@ -8,7 +8,19 @@ import (
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/storage"
 )
 
-func (a *API) GetTasksHandler(w http.ResponseWriter, r *http.Request) {
+// getTasksHandler godoc
+//
+//	@Summary		get tasks
+//	@Description	get info about all tasks
+//	@Produce		json
+//	@Param			search	query		string	false	"query"
+//	@Success		200		{object}	map[string][]storage.Task
+//	@Failure		400		{object}	map[string]string
+//	@Failure		500		{object}	map[string]string
+//	@Router			/api/tasks [get]
+//
+// .
+func (a *API) getTasksHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -18,7 +30,7 @@ func (a *API) GetTasksHandler(w http.ResponseWriter, r *http.Request) {
 	tasks, err := storage.GetTasks(a.DB, search)
 	if err != nil {
 		rErr := apierrors.New(err.Error())
-		rErr.Error(w, http.StatusBadRequest) // возможно тут 500 лучше вернуть
+		rErr.Error(w, http.StatusBadRequest)
 		return
 	}
 

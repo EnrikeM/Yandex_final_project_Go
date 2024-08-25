@@ -8,6 +8,9 @@ import (
 
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/config"
 	"github.com/go-chi/chi"
+	httpSwagger "github.com/swaggo/http-swagger"
+
+	_ "github.com/EnrikeM/Yandex_final_project_Go/docs"
 )
 
 type API struct {
@@ -26,16 +29,16 @@ func NewAPI(db *sql.DB, config config.Config) *API {
 
 func (a *API) Register(r chi.Router) {
 	r.Route("/api/task", func(r chi.Router) {
-		r.Post("/", a.PostTaskHandler)
-		r.Get("/", a.GetTaskHandler)
-		r.Put("/", a.PutTaskHandler)
-		r.Post("/done", a.PostDoneHandler)
-		r.Delete("/", a.DeleteTaskHandler)
+		r.Post("/", a.postTaskHandler)
+		r.Get("/", a.getTaskHandler)
+		r.Put("/", a.updateTaskHandler)
+		r.Post("/done", a.postDoneHandler)
+		r.Delete("/", a.deleteTaskHandler)
 	})
 
-	r.Get("/api/nextdate", a.GetNextDateHandler)
-	r.Get("/api/tasks", a.GetTasksHandler)
-
+	r.Get("/api/nextdate", a.getNextDateHandler)
+	r.Get("/api/tasks", a.getTasksHandler)
+	r.Get("/swagger/*", httpSwagger.WrapHandler)
 	r.Handle("/*", http.FileServer(http.Dir(a.config.WEB_DIR)))
 }
 

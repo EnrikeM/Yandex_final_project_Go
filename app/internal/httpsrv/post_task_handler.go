@@ -17,7 +17,19 @@ type Task struct {
 	// id      string  `json:"-"`
 }
 
-func (a *API) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
+// postTaskHandler godoc
+//
+//	@Summary		post task
+//	@Description	post task with task attributes
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	map[string]string
+//	@Failure		400	{object}	map[string]string
+//	@Failure		500	{object}	map[string]string
+//	@Router			/api/task [post]
+//
+// .
+func (a *API) postTaskHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return

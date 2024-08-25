@@ -8,7 +8,19 @@ import (
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/storage"
 )
 
-func (a *API) GetTaskHandler(w http.ResponseWriter, r *http.Request) {
+// getTaskHandler godoc
+//
+//	@Summary		get task
+//	@Description	get task info by task id
+//	@Produce		json
+//	@Param			id	query		string	true	"task id"
+//	@Success		200	{object}	map[string]string
+//	@Failure		400	{object}	map[string]string
+//	@Failure		500	{object}	map[string]string
+//	@Router			/api/task [get]
+//
+// .
+func (a *API) getTaskHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return

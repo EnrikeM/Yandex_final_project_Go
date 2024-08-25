@@ -7,7 +7,19 @@ import (
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/storage"
 )
 
-func (a *API) DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
+// deleteTaskHandler godoc
+//
+//	@Summary		Delete a task
+//	@Description	Delete a task by ID
+//	@Produce		json
+//	@Param			id	query		int	true	"Task ID"
+//	@Success		200	{object}	map[string]string
+//	@Failure		400	{object}	map[string]string
+//	@Failure		500	{object}	map[string]string
+//	@Router			/api/task [delete]
+//
+// .
+func (a *API) deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return

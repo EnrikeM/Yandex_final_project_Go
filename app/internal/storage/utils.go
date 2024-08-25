@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+var errNoTask = "no task with id = %s"
+
 type Task struct {
 	ID      string `json:"id"`
 	Date    string `json:"date"`
@@ -37,7 +39,7 @@ func (dbParams *DBParams) createDatabase(dbFile string) error {
 	return nil
 }
 
-func GetTask(db *sql.DB, taskID string) (Task, error) { //вынести в utils?
+func GetTask(db *sql.DB, taskID string) (Task, error) {
 	var task Task
 
 	query := "SELECT * FROM scheduler WHERE id = ?"
@@ -45,13 +47,16 @@ func GetTask(db *sql.DB, taskID string) (Task, error) { //вынести в util
 
 	err := row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return Task{}, fmt.Errorf(errNoTask, taskID)
+		}
 		return Task{}, err
 	}
 
 	return task, nil
 }
 
-func GetTasks(db *sql.DB, search string) ([]Task, error) { //вынести в utils?
+func GetTasks(db *sql.DB, search string) ([]Task, error) {
 	var query string
 
 	if search == "" {

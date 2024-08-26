@@ -10,7 +10,7 @@ import (
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/storage"
 )
 
-func main() {
+func main() { //сделать просто err:= run(api)
 	config, err := config.New()
 	if err != nil {
 		log.Fatalf("error loading configuration: %v", err)

@@ -8,16 +8,18 @@ import (
 )
 
 type Config struct {
-	TODO_PORT   string
-	TODO_DBFILE string
-	WEB_DIR     string
+	TODO_PORT     string
+	TODO_DBFILE   string
+	WEB_DIR       string
+	TODO_PASSWORD string
 }
 
 func New() (*Config, error) {
 	return &Config{
-		TODO_PORT:   getEnv("TODO_PORT", "7540"),
-		TODO_DBFILE: getExecutable("TODO_DBFILE"),
-		WEB_DIR:     "./web",
+		TODO_PORT:     getEnv("TODO_PORT", "7540"),
+		TODO_DBFILE:   getExecutable("TODO_DBFILE"),
+		WEB_DIR:       getEnv("WEB_DIR", "./web"),
+		TODO_PASSWORD: os.Getenv("TODO_PASSWORD"),
 	}, nil
 }
 

@@ -1,7 +1,6 @@
 package httpsrv
 
 import (
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -60,13 +59,10 @@ func (a *API) postDoneHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//refactor
 	if err = storage.RedactTask(a.DB, task); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		if err = json.NewEncoder(w).Encode(map[string]string{"error": "error redacting task"}); err != nil {
-			http.Error(w, "error encoding response", http.StatusInternalServerError)
-			return
-		}
+		rErr := apierrors.New(err.Error())
+		rErr.Error(w, http.StatusInternalServerError)
 		return
 	}
 

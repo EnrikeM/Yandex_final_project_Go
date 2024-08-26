@@ -28,7 +28,10 @@ func NewAPI(db *sql.DB, config config.Config) *API {
 }
 
 func (a *API) Register(r chi.Router) {
+
+	r.Post("/api/signin", http.HandlerFunc(a.auth(http.HandlerFunc(a.signInHandler)).ServeHTTP))
 	r.Route("/api/task", func(r chi.Router) {
+		r.Use(a.auth)
 		r.Post("/", a.postTaskHandler)
 		r.Get("/", a.getTaskHandler)
 		r.Put("/", a.updateTaskHandler)
@@ -36,8 +39,12 @@ func (a *API) Register(r chi.Router) {
 		r.Delete("/", a.deleteTaskHandler)
 	})
 
+	r.Route("/api/tasks", func(r chi.Router) {
+		r.Get("/", a.getTasksHandler)
+	})
+
 	r.Get("/api/nextdate", a.getNextDateHandler)
-	r.Get("/api/tasks", a.getTasksHandler)
+
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
 	r.Handle("/*", http.FileServer(http.Dir(a.config.WEB_DIR)))
 }

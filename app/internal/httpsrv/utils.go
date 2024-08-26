@@ -1,12 +1,34 @@
 package httpsrv
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/calc"
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/storage"
 )
+
+type Response struct {
+	MessageKey string
+	MessageVal string
+	W          http.ResponseWriter
+	RespCode   int
+}
+
+func WriteResponse(
+	messageKey string,
+	messageVal string,
+	w http.ResponseWriter,
+	respCode int) {
+	w.WriteHeader(respCode)
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	if err := json.NewEncoder(w).Encode(map[string]string{messageKey: messageVal}); err != nil {
+		http.Error(w, "error encoding response", respCode)
+		return
+	}
+}
 
 func validate(t *storage.Task) error {
 	if t.Date == "" {

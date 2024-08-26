@@ -64,10 +64,11 @@ func (a *API) postTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	response := map[string]string{"id": lastID}
-	if err = json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, "error encoding response", http.StatusInternalServerError)
-		return
-	}
+	// w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	WriteResponse("id", lastID, w, http.StatusOK)
+	// response := map[string]string{"id": lastID}
+	// if err = json.NewEncoder(w).Encode(response); err != nil {
+	// 	http.Error(w, "error encoding response", http.StatusInternalServerError)
+	// 	return
+	// }
 }

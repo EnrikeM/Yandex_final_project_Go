@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	_ "modernc.org/sqlite"
@@ -10,21 +11,28 @@ import (
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/storage"
 )
 
-func main() { //сделать просто err:= run(api)
+func main() {
+	err := run()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
 	config, err := config.New()
 	if err != nil {
-		log.Fatalf("error loading configuration: %v", err)
+		return fmt.Errorf("error loading configuration: %v", err)
 	}
 
 	dbParams := storage.New(nil, *config)
 	if err := dbParams.NewConnection(); err != nil {
-		log.Fatalf("error connecting to database: %v", err)
+		return fmt.Errorf("error connecting to database: %v", err)
 	}
 
 	api := httpsrv.NewAPI(dbParams.DB, *config)
 
 	if err := api.Start(); err != nil {
-		log.Fatalf("error starting API server: %v", err)
+		return fmt.Errorf("error starting API server: %v", err)
 	}
 
 	defer func() {
@@ -32,4 +40,6 @@ func main() { //сделать просто err:= run(api)
 			log.Fatalf("error closing database: %v", err)
 		}
 	}()
+
+	return nil
 }

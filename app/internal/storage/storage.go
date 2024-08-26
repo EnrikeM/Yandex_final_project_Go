@@ -22,6 +22,7 @@ func New(db *sql.DB, config config.Config) DBParams {
 
 func (dbParams *DBParams) NewConnection() error {
 	dbFile := dbParams.Config.TODO_DBFILE
+	fmt.Println(dbParams.Config.TODO_DBFILE)
 
 	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
 		return dbParams.createDatabase(dbFile)

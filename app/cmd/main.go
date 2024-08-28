@@ -23,22 +23,16 @@ func run() error {
 		return fmt.Errorf("error loading configuration: %v", err)
 	}
 
-	dbParams := storage.New(nil, *config)
-	if err := dbParams.NewConnection(); err != nil {
+	storage := storage.New(nil, config)
+	if err := storage.NewConnection(); err != nil {
 		return fmt.Errorf("error connecting to database: %v", err)
 	}
 
-	api := httpsrv.NewAPI(dbParams.DB, *config)
+	api := httpsrv.NewAPI(config, storage)
 
 	if err := api.Start(); err != nil {
 		return fmt.Errorf("error starting API server: %v", err)
 	}
-
-	defer func() {
-		if err := dbParams.DB.Close(); err != nil {
-			log.Fatalf("error closing database: %v", err)
-		}
-	}()
 
 	return nil
 }

@@ -33,7 +33,7 @@ func (a *API) postDoneHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, err := a.DB.GetTask(taskID)
+	task, err := a.storage.GetTask(taskID)
 	if err != nil {
 		rErr := apierrors.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest)
@@ -41,7 +41,7 @@ func (a *API) postDoneHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if task.Repeat == "" {
-		if err := a.DB.DeleteTask(taskID); err != nil {
+		if err := a.storage.DeleteTask(taskID); err != nil {
 			rErr := apierrors.New(err.Error())
 			rErr.Error(w, http.StatusBadRequest)
 			return
@@ -58,7 +58,7 @@ func (a *API) postDoneHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = a.DB.Update(task); err != nil {
+	if err = a.storage.Update(task); err != nil {
 		rErr := apierrors.New(err.Error())
 		rErr.Error(w, http.StatusInternalServerError)
 		return

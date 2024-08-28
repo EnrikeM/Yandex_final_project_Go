@@ -1,7 +1,6 @@
 package httpsrv
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -16,16 +15,16 @@ import (
 )
 
 type API struct {
-	DB     storage.Scheduler
-	config config.Config
-	router chi.Router
+	storage storage.Scheduler
+	config  config.Config
+	router  chi.Router
 }
 
-func NewAPI(db *sql.DB, config config.Config) *API {
+func NewAPI(config config.Config, storage storage.Scheduler) *API {
 	api := &API{
-		router: chi.NewRouter(),
-		config: config,
-		DB:     storage.New(db, config),
+		router:  chi.NewRouter(),
+		config:  config,
+		storage: storage,
 	}
 
 	api.register(api.router)
@@ -45,6 +44,7 @@ func (a *API) register(r chi.Router) {
 	})
 
 	r.Route("/api/tasks", func(r chi.Router) {
+		r.Use(a.auth)
 		r.Get("/", a.getTasksHandler)
 	})
 

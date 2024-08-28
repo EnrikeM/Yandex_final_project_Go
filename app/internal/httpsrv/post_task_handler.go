@@ -43,13 +43,7 @@ func (a *API) postTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if a.DB.DB == nil {
-		log.Printf("database connection is nil")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	lastID, err := a.DB.Add(task)
+	lastID, err := a.storage.Add(task)
 	if err != nil {
 		log.Printf("error getting last id: %v", err)
 		http.Error(w, "error saving task", http.StatusInternalServerError)

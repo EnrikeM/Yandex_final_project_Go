@@ -31,7 +31,7 @@ func (a *API) getTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, err := a.DB.GetTask(taskID)
+	task, err := a.storage.GetTask(taskID)
 	if err != nil {
 		rErr := apierrors.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest)

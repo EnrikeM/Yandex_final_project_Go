@@ -14,8 +14,8 @@ type Config struct {
 	TODO_PASSWORD string
 }
 
-func New() (*Config, error) {
-	return &Config{
+func New() (Config, error) {
+	return Config{
 		TODO_PORT:     getEnv("TODO_PORT", "7540"),
 		TODO_DBFILE:   getExecutable("TODO_DBFILE"),
 		WEB_DIR:       getEnv("WEB_DIR", "./web"),

@@ -12,7 +12,7 @@ import (
 )
 
 type Scheduler struct {
-	DB     *sql.DB
+	db     *sql.DB
 	Config config.Config
 }
 
@@ -28,9 +28,9 @@ type Task struct {
 	Repeat  string `json:"repeat"`
 }
 
-func New(DB *sql.DB, config config.Config) Scheduler {
+func New(db *sql.DB, config config.Config) Scheduler {
 	return Scheduler{
-		DB:     DB,
+		db:     db,
 		Config: config,
 	}
 }
@@ -53,7 +53,7 @@ func (s *Scheduler) createDatabase(dbFile string) error {
 		return fmt.Errorf("error creating db: %w", err)
 	}
 
-	s.DB = db
+	s.db = db
 	return nil
 }
 
@@ -61,7 +61,7 @@ func (s *Scheduler) GetTask(taskID string) (Task, error) {
 	var task Task
 
 	query := "SELECT id, date, title, comment, repeat FROM scheduler WHERE id = ?"
-	row := s.DB.QueryRow(query, taskID)
+	row := s.db.QueryRow(query, taskID)
 
 	err := row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 	if err != nil {
@@ -78,21 +78,21 @@ func (s *Scheduler) GetTasks(search string) ([]Task, error) {
 	var query string
 
 	if search == "" {
-		query = `SELECT id, date, title, comment, repeat FROM scheduler ORDER BY date DESC LIMIT :limit`
+		query = `SELECT id, date, title, comment, repeat FROM scheduler ORDER BY date LIMIT :limit`
 	}
 	if search != "" {
 		searchDate, err := time.Parse("02.01.2006", search)
 		if err == nil {
 			search = searchDate.Format(calc.TimeFormat)
 			query = `SELECT id, date, title, comment, repeat FROM scheduler
-			 WHERE date LIKE :likePattern ORDER BY date DESC LIMIT :limit`
+			 WHERE date LIKE :likePattern ORDER BY date LIMIT :limit`
 		} else {
 			query = `SELECT id, date, title, comment, repeat FROM scheduler 
 			WHERE title LIKE :likePattern OR comment LIKE :likePattern ORDER BY date LIMIT :limit`
 		}
 	}
 
-	rows, err := s.DB.Query(query,
+	rows, err := s.db.Query(query,
 		sql.Named("limit", limit),
 		sql.Named("likePattern", fmt.Sprintf("%%%s%%", search)),
 	)
@@ -125,7 +125,7 @@ func (s *Scheduler) Update(task Task) error {
 	UPDATE scheduler 
 	SET date = ?, title = ?, comment = ?, repeat = ?, id = ?
 	WHERE id = ?;`
-	rows, err := s.DB.Exec(query, task.Date, &task.Title, task.Comment, task.Repeat, task.ID, task.ID)
+	rows, err := s.db.Exec(query, task.Date, &task.Title, task.Comment, task.Repeat, task.ID, task.ID)
 	if err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func (s *Scheduler) Update(task Task) error {
 
 func (s *Scheduler) DeleteTask(taskID string) error {
 	query := "DELETE FROM scheduler WHERE id = ?"
-	rows, err := s.DB.Exec(query, taskID)
+	rows, err := s.db.Exec(query, taskID)
 	if err != nil {
 		return err
 	}
@@ -163,7 +163,7 @@ func (s *Scheduler) DeleteTask(taskID string) error {
 func (s *Scheduler) Add(task Task) (string, error) {
 	query := "INSERT INTO scheduler (date, title, comment, repeat) VALUES (?, ?, ?, ?)"
 
-	result, err := s.DB.Exec(query, task.Date, &task.Title, task.Comment, task.Repeat)
+	result, err := s.db.Exec(query, task.Date, &task.Title, task.Comment, task.Repeat)
 	if err != nil {
 		return "", fmt.Errorf("error executing query: %w", err)
 	}
@@ -194,7 +194,7 @@ func (s *Scheduler) NewConnection() error {
 		return fmt.Errorf("error pinging db: %w", err)
 	}
 
-	s.DB = db
+	s.db = db
 	return nil
 }
 

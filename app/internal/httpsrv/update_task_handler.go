@@ -47,7 +47,7 @@ func (a *API) updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = a.DB.Update(task); err != nil {
+	if err = a.storage.Update(task); err != nil {
 		rErr := apierrors.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest)
 		return

@@ -36,7 +36,7 @@ func (a *API) deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 
-	if err := a.DB.DeleteTask(taskID); err != nil {
+	if err := a.storage.DeleteTask(taskID); err != nil {
 		err := apierrors.New(err.Error())
 		err.Error(w, http.StatusBadRequest)
 		return

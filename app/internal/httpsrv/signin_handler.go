@@ -48,6 +48,7 @@ func (a *API) auth(next http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
+
 		}
 
 		pass := a.config.TODO_PASSWORD
@@ -56,14 +57,14 @@ func (a *API) auth(next http.Handler) http.Handler {
 			err := json.NewDecoder(r.Body).Decode(&passRequest)
 			if err != nil {
 				rErr := apierrors.New(err.Error())
-				rErr.Error(w, http.StatusBadRequest)
+				rErr.Error(w, http.StatusUnauthorized)
 				return
 			}
 
 			if passRequest.Password == pass {
 				token, err := GenerateJWT(passRequest.Password)
 				if err != nil {
-					rErr := apierrors.New("could not generate token")
+					rErr := apierrors.New(err.Error())
 					rErr.Error(w, http.StatusInternalServerError)
 					return
 				}
@@ -77,14 +78,14 @@ func (a *API) auth(next http.Handler) http.Handler {
 				})
 
 				WriteResponse("token", token, w, http.StatusOK)
-
 				return
+
 			}
 
 			rErr := apierrors.New("invalid password")
 			rErr.Error(w, http.StatusUnauthorized)
-
 			return
+
 		}
 
 		next.ServeHTTP(w, r)
@@ -92,5 +93,10 @@ func (a *API) auth(next http.Handler) http.Handler {
 }
 
 func (a *API) signInHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
 	WriteResponse("success", "you have successfully signed in", w, http.StatusOK)
 }

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/response"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -56,7 +56,7 @@ func (a *API) auth(next http.Handler) http.Handler {
 			var passRequest PassRequest
 			err := json.NewDecoder(r.Body).Decode(&passRequest)
 			if err != nil {
-				rErr := apierrors.New(err.Error())
+				rErr := response.New(err.Error())
 				rErr.Error(w, http.StatusUnauthorized)
 				return
 			}
@@ -64,7 +64,7 @@ func (a *API) auth(next http.Handler) http.Handler {
 			if passRequest.Password == pass {
 				token, err := GenerateJWT(passRequest.Password)
 				if err != nil {
-					rErr := apierrors.New(err.Error())
+					rErr := response.New(err.Error())
 					rErr.Error(w, http.StatusInternalServerError)
 					return
 				}
@@ -77,12 +77,12 @@ func (a *API) auth(next http.Handler) http.Handler {
 					Secure:   false,
 				})
 
-				WriteResponse("token", token, w, http.StatusOK)
+				response.WriteResponse("token", token, w, http.StatusOK)
 				return
 
 			}
 
-			rErr := apierrors.New("invalid password")
+			rErr := response.New("invalid password")
 			rErr.Error(w, http.StatusUnauthorized)
 			return
 
@@ -98,5 +98,5 @@ func (a *API) signInHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	WriteResponse("success", "you have successfully signed in", w, http.StatusOK)
+	response.WriteResponse("success", "you have successfully signed in", w, http.StatusOK)
 }

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/calc"
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/response"
 )
 
 // postDoneHandler godoc
@@ -28,21 +28,21 @@ func (a *API) postDoneHandler(w http.ResponseWriter, r *http.Request) {
 
 	taskID := r.URL.Query().Get("id")
 	if taskID == "" {
-		err := apierrors.ErrIDNotProvided
+		err := response.ErrIDNotProvided
 		err.Error(w, http.StatusBadRequest)
 		return
 	}
 
 	task, err := a.storage.GetTask(taskID)
 	if err != nil {
-		rErr := apierrors.New(err.Error())
+		rErr := response.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest)
 		return
 	}
 
 	if task.Repeat == "" {
 		if err := a.storage.DeleteTask(taskID); err != nil {
-			rErr := apierrors.New(err.Error())
+			rErr := response.New(err.Error())
 			rErr.Error(w, http.StatusBadRequest)
 			return
 		}
@@ -53,13 +53,13 @@ func (a *API) postDoneHandler(w http.ResponseWriter, r *http.Request) {
 
 	task.Date, err = calc.NextDate(time.Now(), task.Date, task.Repeat)
 	if err != nil {
-		rErr := apierrors.New(err.Error())
+		rErr := response.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest)
 		return
 	}
 
 	if err = a.storage.Update(task); err != nil {
-		rErr := apierrors.New(err.Error())
+		rErr := response.New(err.Error())
 		rErr.Error(w, http.StatusInternalServerError)
 		return
 	}

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/response"
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/storage"
 )
 
@@ -29,7 +29,7 @@ func (a *API) getTasksHandler(w http.ResponseWriter, r *http.Request) {
 
 	tasks, err := a.storage.GetTasks(search)
 	if err != nil {
-		rErr := apierrors.New(err.Error())
+		rErr := response.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest)
 		return
 	}

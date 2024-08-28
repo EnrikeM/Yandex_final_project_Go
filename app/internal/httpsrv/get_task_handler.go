@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/response"
 )
 
 // getTaskHandler godoc
@@ -27,13 +27,13 @@ func (a *API) getTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	taskID := r.URL.Query().Get("id")
 	if taskID == "" {
-		apierrors.ErrIDNotProvided.Error(w, http.StatusBadRequest)
+		response.ErrIDNotProvided.Error(w, http.StatusBadRequest)
 		return
 	}
 
 	task, err := a.storage.GetTask(taskID)
 	if err != nil {
-		rErr := apierrors.New(err.Error())
+		rErr := response.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest)
 		return
 	}

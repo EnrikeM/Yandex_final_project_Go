@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/calc"
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/response"
 )
 
 // DeleteTaskHandler godoc
@@ -26,7 +26,7 @@ func (a *API) getNextDateHandler(w http.ResponseWriter, r *http.Request) {
 	nowStr := r.URL.Query().Get("now")
 	now, err := time.Parse(calc.TimeFormat, nowStr)
 	if err != nil {
-		apierrors.ErrParseTime.Error(w, http.StatusBadRequest)
+		response.ErrParseTime.Error(w, http.StatusBadRequest)
 		return
 	}
 
@@ -35,7 +35,7 @@ func (a *API) getNextDateHandler(w http.ResponseWriter, r *http.Request) {
 
 	result, err := calc.NextDate(now, date, repeat)
 	if err != nil {
-		rErr := apierrors.New(err.Error())
+		rErr := response.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest)
 		return
 	}

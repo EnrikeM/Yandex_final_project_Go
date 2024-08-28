@@ -3,7 +3,7 @@ package httpsrv
 import (
 	"net/http"
 
-	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/response"
 )
 
 // deleteTaskHandler godoc
@@ -26,18 +26,12 @@ func (a *API) deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	taskID := r.URL.Query().Get("id")
 	if taskID == "" {
-		apierrors.ErrIDNotProvided.Error(w, http.StatusBadRequest)
+		response.ErrIDNotProvided.Error(w, http.StatusBadRequest)
 		return
 	}
 
-	// if _, err := storage.GetTask(a.DB, taskID); err != nil {
-	// 	err := apierrors.New(err.Error())
-	// 	err.Error(w, http.StatusBadRequest)
-	// 	return
-	// }
-
 	if err := a.storage.DeleteTask(taskID); err != nil {
-		err := apierrors.New(err.Error())
+		err := response.New(err.Error())
 		err.Error(w, http.StatusBadRequest)
 		return
 	}

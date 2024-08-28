@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/response"
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/storage"
 )
 
@@ -30,25 +30,25 @@ func (a *API) updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&task)
 	if err != nil {
-		rErr := apierrors.New(err.Error())
+		rErr := response.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest)
 		return
 	}
 
 	if task.ID == "" {
-		apierrors.ErrIDNotProvided.Error(w, http.StatusBadRequest)
+		response.ErrIDNotProvided.Error(w, http.StatusBadRequest)
 		return
 	}
 
 	err = task.Validate()
 	if err != nil {
-		rErr := apierrors.New(err.Error())
+		rErr := response.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest)
 		return
 	}
 
 	if err = a.storage.Update(task); err != nil {
-		rErr := apierrors.New(err.Error())
+		rErr := response.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest)
 		return
 	}

@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
-	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/storage"
 )
 
 // deleteTaskHandler godoc
@@ -31,13 +30,13 @@ func (a *API) deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := storage.GetTask(a.DB, taskID); err != nil {
-		err := apierrors.New(err.Error())
-		err.Error(w, http.StatusBadRequest)
-		return
-	}
+	// if _, err := storage.GetTask(a.DB, taskID); err != nil {
+	// 	err := apierrors.New(err.Error())
+	// 	err.Error(w, http.StatusBadRequest)
+	// 	return
+	// }
 
-	if err := storage.DeleteTask(a.DB, taskID); err != nil {
+	if err := a.DB.DeleteTask(taskID); err != nil {
 		err := apierrors.New(err.Error())
 		err.Error(w, http.StatusBadRequest)
 		return

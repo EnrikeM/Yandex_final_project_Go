@@ -1,8 +1,11 @@
-FROM golang:1.23
+FROM golang:1.22.0
 
 ENV TODO_PORT=7540
 ENV TODO_PASSWORD=12345
 ENV TODO_DBFILE=scheduler.db
+ENV CGO_ENABLED=0
+ENV GOOS=linux 
+ENV GOARCH=amd64
 
 WORKDIR /app
 
@@ -14,8 +17,8 @@ COPY app/ ./app/
 COPY docs/ ./docs/  
 COPY web/ ./web
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /my_app ./app/cmd/main.go
+RUN go build -o /todo_list_app ./app/cmd/main.go
 
 EXPOSE ${TODO_PORT}
 
-CMD ["/my_app"]
+CMD ["/todo_list_app"]

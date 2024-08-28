@@ -2,11 +2,13 @@ package httpsrv
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/config"
+	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/storage"
 	"github.com/go-chi/chi"
 	httpSwagger "github.com/swaggo/http-swagger"
 
@@ -14,20 +16,23 @@ import (
 )
 
 type API struct {
-	DB     *sql.DB
+	DB     storage.Scheduler
 	config config.Config
-	r      chi.Router
+	router chi.Router
 }
 
 func NewAPI(db *sql.DB, config config.Config) *API {
-	return &API{
-		r:      chi.NewRouter(),
+	api := &API{
+		router: chi.NewRouter(),
 		config: config,
-		DB:     db,
+		DB:     storage.New(db, config),
 	}
+
+	api.register(api.router)
+	return api
 }
 
-func (a *API) Register(r chi.Router) {
+func (a *API) register(r chi.Router) {
 
 	r.Post("/api/signin", http.HandlerFunc(a.auth(http.HandlerFunc(a.signInHandler)).ServeHTTP))
 	r.Route("/api/task", func(r chi.Router) {
@@ -50,12 +55,31 @@ func (a *API) Register(r chi.Router) {
 }
 
 func (a *API) Start() error {
-	a.Register(a.r)
 	log.Printf("server start on :%s", a.config.TODO_PORT)
-	err := http.ListenAndServe(fmt.Sprintf(":%s", a.config.TODO_PORT), a.r)
+	err := http.ListenAndServe(fmt.Sprintf(":%s", a.config.TODO_PORT), a.router)
 	if err != nil {
-		log.Fatal(fmt.Errorf("error starting server %w", err))
+		return fmt.Errorf("error starting server %w", err)
 	}
 
 	return nil
+}
+
+type Response struct {
+	MessageKey string
+	MessageVal string
+	W          http.ResponseWriter
+	RespCode   int
+}
+
+func WriteResponse(
+	messageKey string,
+	messageVal string,
+	w http.ResponseWriter,
+	respCode int) {
+	w.WriteHeader(respCode)
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	if err := json.NewEncoder(w).Encode(map[string]string{messageKey: messageVal}); err != nil {
+		http.Error(w, "error encoding response", respCode)
+		return
+	}
 }

@@ -27,7 +27,7 @@ func (a *API) getTasksHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	search := r.URL.Query().Get("search")
 
-	tasks, err := storage.GetTasks(a.DB, search)
+	tasks, err := a.DB.GetTasks(search)
 	if err != nil {
 		rErr := apierrors.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest)

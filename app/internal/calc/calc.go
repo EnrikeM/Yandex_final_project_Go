@@ -22,6 +22,7 @@ const (
 	errForbiddenYUsage    = "`y` must be provided without value"
 	errValueDTooBig       = "value of `d` must be less than 400"
 	errForbiddenMValue    = "`m` second value must be integer or array with values from 1 to 12"
+	errFail               = "couldn't resolve date %s"
 )
 
 var weekDay = map[string]string{
@@ -253,7 +254,7 @@ func getMonthDate(dateFormatted time.Time, days []int, repeatVals []string) (str
 		}
 
 	dayStart:
-		for {
+		for i := 0; i < 365; i++ {
 			for _, day := range days {
 				if dateFormatted.Day() == day {
 					break dayStart
@@ -262,7 +263,7 @@ func getMonthDate(dateFormatted time.Time, days []int, repeatVals []string) (str
 			dateFormatted = dateFormatted.AddDate(0, 0, 1)
 		}
 
-		for {
+		for i := 0; i < 12; i++ {
 			for _, month := range months {
 				if dateFormatted.Month().String() == monthsMap[month] {
 					return dateFormatted.Format(TimeFormat), nil
@@ -273,7 +274,7 @@ func getMonthDate(dateFormatted time.Time, days []int, repeatVals []string) (str
 
 	}
 
-	for {
+	for i := 0; i < 365; i++ {
 		for _, day := range days {
 			if dateFormatted.Day() == day {
 				return dateFormatted.Format(TimeFormat), nil
@@ -281,4 +282,7 @@ func getMonthDate(dateFormatted time.Time, days []int, repeatVals []string) (str
 		}
 		dateFormatted = dateFormatted.AddDate(0, 0, 1)
 	}
+
+	return "", fmt.Errorf(errFail, dateFormatted)
+
 }

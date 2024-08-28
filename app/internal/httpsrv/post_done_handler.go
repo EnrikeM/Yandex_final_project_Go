@@ -6,7 +6,6 @@ import (
 
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/apierrors"
 	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/calc"
-	"github.com/EnrikeM/Yandex_final_project_Go/app/internal/storage"
 )
 
 // postDoneHandler godoc
@@ -34,7 +33,7 @@ func (a *API) postDoneHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, err := storage.GetTask(a.DB, taskID)
+	task, err := a.DB.GetTask(taskID)
 	if err != nil {
 		rErr := apierrors.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest)
@@ -42,7 +41,7 @@ func (a *API) postDoneHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if task.Repeat == "" {
-		if err := storage.DeleteTask(a.DB, taskID); err != nil {
+		if err := a.DB.DeleteTask(taskID); err != nil {
 			rErr := apierrors.New(err.Error())
 			rErr.Error(w, http.StatusBadRequest)
 			return
@@ -55,12 +54,11 @@ func (a *API) postDoneHandler(w http.ResponseWriter, r *http.Request) {
 	task.Date, err = calc.NextDate(time.Now(), task.Date, task.Repeat)
 	if err != nil {
 		rErr := apierrors.New(err.Error())
-		rErr.Error(w, http.StatusBadRequest) // возможно тут 500 лучше вернуть
+		rErr.Error(w, http.StatusBadRequest)
 		return
 	}
 
-	//refactor
-	if err = storage.RedactTask(a.DB, task); err != nil {
+	if err = a.DB.Update(task); err != nil {
 		rErr := apierrors.New(err.Error())
 		rErr.Error(w, http.StatusInternalServerError)
 		return

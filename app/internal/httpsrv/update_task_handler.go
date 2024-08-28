@@ -40,26 +40,14 @@ func (a *API) updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var validateTask = storage.Task{
-		Date:    task.Date,
-		Title:   task.Title,
-		Comment: task.Comment,
-		Repeat:  task.Repeat,
-	}
-
-	err = validate(&validateTask)
+	err = task.Validate()
 	if err != nil {
 		rErr := apierrors.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest)
 		return
 	}
 
-	if _, err := storage.GetTask(a.DB, task.ID); err != nil {
-		apierrors.ErrNoSuchTask.Error(w, http.StatusBadRequest)
-		return
-	}
-
-	if err = storage.RedactTask(a.DB, task); err != nil {
+	if err = a.DB.Update(task); err != nil {
 		rErr := apierrors.New(err.Error())
 		rErr.Error(w, http.StatusBadRequest)
 		return
